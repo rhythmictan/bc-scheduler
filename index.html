@@ -113,6 +113,219 @@
   .grid { display: grid; grid-template-columns: 360px 1fr; gap: 24px; }
   @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
 
+  /* ══════════════════════════════════════════
+     移动端优化
+  ══════════════════════════════════════════ */
+  @media (max-width: 600px) {
+    /* Header */
+    header {
+      padding: 0 16px;
+    }
+    header::after {
+      width: 30%;
+    }
+    .header-left {
+      gap: 12px;
+      padding: 16px 0;
+    }
+    .header-logo-mark {
+      width: 38px; height: 38px;
+      font-size: 18px;
+    }
+    header h1 {
+      font-size: 22px;
+      letter-spacing: 1px;
+    }
+    header .subtitle {
+      font-size: 9px;
+      letter-spacing: 0.8px;
+    }
+    .header-right {
+      padding: 16px 0 16px 24px;
+    }
+    .header-badge {
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    /* Container */
+    .container {
+      padding: 16px 12px;
+    }
+
+    /* Card */
+    .card {
+      padding: 16px;
+    }
+
+    /* 约束输入 */
+    .constraint-input {
+      font-size: 16px; /* 防止 iOS 自动缩放 */
+      min-height: 80px;
+    }
+    .example-chip {
+      font-size: 10px;
+      padding: 5px 9px;
+    }
+
+    /* 时长控制 */
+    .duration-control {
+      gap: 8px;
+    }
+    .duration-display {
+      font-size: 18px;
+      min-width: 26px;
+    }
+
+    /* 生成按钮 */
+    .btn-primary {
+      font-size: 15px;
+      padding: 14px;
+      letter-spacing: 2px;
+    }
+
+    /* 结果区域 header */
+    .result-header {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .result-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+
+    /* ── 课表：手机上改为卡片式布局 ── */
+    .schedule-table thead {
+      display: none; /* 隐藏表头 */
+    }
+    .schedule-table,
+    .schedule-table tbody,
+    .schedule-table tr,
+    .schedule-table td {
+      display: block;
+      width: 100%;
+    }
+    .schedule-table tr {
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--black);
+      margin-bottom: 8px;
+      padding: 12px;
+      position: relative;
+      background: var(--surface);
+    }
+    .schedule-table tr:last-child {
+      margin-bottom: 0;
+    }
+    .schedule-table tr:hover td {
+      background: transparent;
+    }
+    .schedule-table td {
+      padding: 0;
+      border: none;
+    }
+
+    /* 卡片内布局：用 flex 重新排列 */
+    .schedule-table tr {
+      display: grid;
+      grid-template-columns: 40px 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 4px 10px;
+      align-items: center;
+    }
+    /* td 顺序：badge | 节次信息 | 时长 | 操作按钮 */
+    .schedule-table td:nth-child(1) { /* badge */
+      grid-column: 1;
+      grid-row: 1 / 3;
+      display: flex;
+      align-items: center;
+    }
+    .schedule-table td:nth-child(2) { /* 节次/曲目 */
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .schedule-table td:nth-child(3) { /* BC号 */
+      grid-column: 3;
+      grid-row: 1;
+      text-align: right;
+    }
+    .schedule-table td:nth-child(4) { /* 时长 */
+      grid-column: 2;
+      grid-row: 2;
+    }
+    .schedule-table td:nth-child(5) { /* 操作 */
+      grid-column: 3;
+      grid-row: 2;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .track-badge {
+      width: 32px; height: 32px;
+      font-size: 11px;
+    }
+    .bc-number {
+      font-size: 22px;
+    }
+    .bc-number .bc-prefix {
+      font-size: 10px;
+    }
+    .track-name {
+      font-size: 12px;
+    }
+    .track-focus {
+      font-size: 11px;
+    }
+    .track-song {
+      font-size: 11px;
+      max-width: 100%;
+    }
+    .duration-cell {
+      font-size: 16px;
+      color: var(--gray);
+    }
+
+    /* 操作按钮加大点击区域 */
+    .reroll-btn, .lock-btn {
+      padding: 7px 11px;
+      font-size: 14px;
+    }
+
+    /* 总时长条 */
+    .total-bar {
+      clip-path: none; /* 小屏去掉斜切，避免截断 */
+      border-radius: 2px;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 16px;
+    }
+    .total-bar .total-time {
+      font-size: 28px;
+    }
+    .total-bar .total-range {
+      margin-left: 0;
+      width: 100%;
+    }
+    .progress-bar-wrap {
+      width: 100%;
+      order: 3;
+    }
+
+    /* Toast 位置 */
+    .toast {
+      bottom: 16px;
+      right: 12px;
+      left: 12px;
+      max-width: none;
+      font-size: 12px;
+    }
+
+    /* 历史记录 */
+    .history-item .history-tracks {
+      font-size: 10px;
+      word-break: break-all;
+    }
+  }
+
   /* ── Card ── */
   .card {
     background: var(--surface);
