@@ -1054,7 +1054,7 @@ const TRACK_INFO = {
 let rules = [];          // 解析后的约束规则
 let currentSchedule = null;
 let lockedTracks = {};   // { T1: bcNum, T3: bcNum, ... }
-let history = JSON.parse(localStorage.getItem('bc_history') || '[]');
+let history = JSON.parse(localStorage.getItem('bc_history') || '[]').slice(0, 3);
 
 // ── 工具函数 ──
 function fmtSec(s) {
@@ -1518,7 +1518,7 @@ function renderHistory() {
     return;
   }
   document.getElementById('historyCard').style.display = 'block';
-  document.getElementById('historyList').innerHTML = history.map((h, i) => `
+  document.getElementById('historyList').innerHTML = history.slice(0, 3).map((h, i) => `
     <div class="history-item" onclick="loadHistory(${i})">
       <div class="history-time">${h.time} <span class="history-duration">${fmtSec(h.total)}</span></div>
       <div class="history-tracks">${h.tracks}</div>
