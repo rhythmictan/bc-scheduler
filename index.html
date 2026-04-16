@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BodyCombat 随机排课系统</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #f5f5f5;
+    --surface: #ffffff;
+    --surface2: #f0f0f0;
+    --border: #e0e0e0;
+    --accent: #e8001c;
+    --accent-dark: #b0001a;
+    --accent-light: #ff1a35;
+    --black: #0a0a0a;
+    --black2: #1a1a1a;
+    --gray: #555555;
+    --gray2: #888888;
+    --text: #0a0a0a;
+    --text2: #666666;
+    --green: #00a86b;
+    --gold: #c8860a;
+    --radius: 0px;
+    --radius-sm: 2px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--black);
+    padding: 0 40px;
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 40%;
+    background: var(--accent);
+    clip-path: polygon(8% 0, 100% 0, 100% 100%, 0% 100%);
+    z-index: 0;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 0;
+    z-index: 1;
+    flex: 1;
+  }
+  .header-logo-mark {
+    width: 48px; height: 48px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+  }
+  header h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff;
+    line-height: 1;
+  }
+  header h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  header .subtitle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 4px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .header-right {
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    padding: 22px 0 22px 48px;
+  }
+  .header-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff;
+    opacity: 0.9;
+  }
+
+  /* ── Layout ── */
+  .container { max-width: 1140px; margin: 0 auto; padding: 32px 24px; }
+  .grid { display: grid; grid-template-columns: 360px 1fr; gap: 24px; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    border-top: 3px solid var(--black);
+  }
+  .card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--black);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-title .dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+
+  /* ── AI 约束输入 ── */
+  .constraint-area {
+    position: relative;
+  }
+  .constraint-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    padding: 12px 14px;
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.6;
+    transition: border-color 0.2s, background 0.2s;
+    font-family: inherit;
+  }
+  .constraint-input:focus {
+    outline: none;
+    background: #fff;
+    border-color: var(--accent);
+  }
+  .constraint-input::placeholder { color: #aaa; }
+
+  .constraint-examples {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .example-chip {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .example-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232,0,28,0.04);
+  }
+
+  /* ── 解析结果标签 ── */
+  .parsed-rules {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .rule-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    animation: fadeIn 0.25s ease;
+  }
+  .rule-tag .rule-icon { font-size: 13px; }
+  .rule-tag .rule-text { flex: 1; color: var(--text); }
+  .rule-tag .rule-remove {
+    color: #bbb;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 2px;
+    transition: color 0.15s;
+  }
+  .rule-tag .rule-remove:hover { color: var(--accent); }
+  .rule-tag.type-exclude { border-left: 3px solid var(--accent); }
+  .rule-tag.type-include { border-left: 3px solid var(--green); }
+  .rule-tag.type-range   { border-left: 3px solid var(--black); }
+  .rule-tag.type-lock    { border-left: 3px solid var(--gold); }
+
+  /* ── 时长控制 ── */
+  .duration-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .duration-control label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-width: 28px;
+  }
+  .range-input {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 3px;
+    border-radius: 0;
+    background: var(--border);
+    outline: none;
+  }
+  .range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 0;
+    background: var(--accent);
+    cursor: pointer;
+    transform: rotate(45deg);
+  }
+  .duration-display {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--black);
+    min-width: 32px;
+    text-align: right;
+    line-height: 1;
+  }
+
+  /* ── 按钮 ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    width: 100%;
+    padding: 16px;
+    font-size: 17px;
+    margin-top: 16px;
+    letter-spacing: 3px;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 100%, 10px 100%);
+    position: relative;
+  }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-primary:active { transform: scale(0.99); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary {
+    background: transparent;
+    color: var(--gray);
+    border: 1.5px solid var(--border);
+    font-size: 11px;
+    padding: 6px 14px;
+  }
+  .btn-secondary:hover { border-color: var(--black); color: var(--black); }
+  .btn-parse {
+    background: var(--black);
+    color: white;
+    font-size: 12px;
+    padding: 9px 14px;
+    margin-top: 10px;
+    width: 100%;
+    letter-spacing: 2px;
+  }
+  .btn-parse:hover { background: var(--accent); }
+  .btn-parse:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── 结果区域 ── */
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .result-actions { display: flex; gap: 8px; }
+
+  /* ── 课表 ── */
+  .schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .schedule-table th {
+    text-align: left;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray2);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 8px 14px;
+    border-bottom: 2px solid var(--black);
+    background: var(--surface2);
+  }
+  .schedule-table td {
+    padding: 13px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    vertical-align: middle;
+  }
+  .schedule-table tr:last-child td { border-bottom: none; }
+  .schedule-table tr:hover td { background: #fafafa; }
+
+  .track-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    background: var(--black);
+    color: #fff;
+    clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+  }
+  .track-badge.t1 { background: var(--accent); }
+  .track-badge.t2 { background: #222; }
+  .track-badge.t3 { background: var(--accent); }
+  .track-badge.t4 { background: #222; }
+  .track-badge.t5 { background: var(--accent); }
+  .track-badge.t6 { background: #222; }
+  .track-badge.t7 { background: var(--accent); }
+  .track-badge.t8 { background: #111; }
+
+  .bc-number {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--black);
+    line-height: 1;
+    letter-spacing: 1px;
+  }
+  .bc-number .bc-prefix {
+    font-size: 12px;
+    color: var(--gray2);
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-right: 1px;
+  }
+
+  .track-name {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--black);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .track-focus { font-size: 12px; color: var(--gray2); margin-top: 2px; }
+  .track-song {
+    font-size: 12px;
+    color: var(--accent);
+    margin-top: 3px;
+    font-style: italic;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  .duration-cell {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--black);
+    white-space: nowrap;
+    letter-spacing: 1px;
+  }
+
+  .reroll-btn {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--gray2);
+    cursor: pointer;
+    padding: 5px 9px;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .reroll-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(232,0,28,0.04); }
+
+  .lock-btn {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--gray2);
+    cursor: pointer;
+    padding: 5px 9px;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .lock-btn.locked { border-color: var(--black); color: var(--black); background: var(--black); color: #fff; }
+  .lock-btn:hover { border-color: var(--black); color: var(--black); }
+
+  /* ── 总时长条 ── */
+  .total-bar {
+    margin-top: 20px;
+    background: var(--black);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 12px 100%);
+  }
+  .total-bar .total-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+  .total-bar .total-time {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+    letter-spacing: 2px;
+  }
+  .total-bar .total-time.ok { color: #4ade80; }
+  .total-bar .total-time.warn { color: #fbbf24; }
+  .total-bar .total-time.bad { color: var(--accent-light); }
+  .total-bar .total-range {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    margin-left: auto;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .progress-bar-wrap {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 0;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    transition: width 0.4s ease, background 0.3s;
+  }
+
+  /* ── 空状态 ── */
+  .empty-state {
+    text-align: center;
+    padding: 70px 20px;
+    color: var(--gray2);
+  }
+  .empty-state .empty-icon {
+    font-size: 52px;
+    margin-bottom: 20px;
+    display: block;
+    opacity: 0.3;
+    filter: grayscale(1);
+  }
+  .empty-state p {
+    font-size: 13px;
+    line-height: 1.8;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #bbb;
+  }
+
+  /* ── 加载状态 ── */
+  .loading-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.92);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 10;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  .loading-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--black);
+    border: none;
+    border-left: 4px solid var(--accent);
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.25s ease;
+    z-index: 100;
+    max-width: 300px;
+    letter-spacing: 0.3px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-left-color: var(--green); }
+  .toast.error { border-left-color: var(--accent); }
+  .toast.info { border-left-color: #fff; }
+
+  /* ── 历史记录 ── */
+  .history-list { display: flex; flex-direction: column; gap: 6px; }
+  .history-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid transparent;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+  }
+  .history-item:hover { border-left-color: var(--accent); background: #fff; }
+  .history-item .history-time { color: var(--gray2); margin-bottom: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .history-item .history-tracks { color: var(--text); font-weight: 600; font-size: 11px; }
+  .history-item .history-duration { color: var(--accent); float: right; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; }
+
+  /* ── 数据标注 ── */
+  .verified-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    background: rgba(0,168,107,0.12);
+    color: var(--green);
+    margin-left: 4px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .estimated-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    background: var(--surface2);
+    color: var(--gray2);
+    margin-left: 4px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-logo-mark">🥊</div>
+    <div>
+      <h1>BODY<em>COMBAT</em></h1>
+      <div class="subtitle">随机排课系统 · BC1–106 · T1–T8</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-badge">INSTRUCTOR TOOL</div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="grid">
+
+    <!-- ── 左侧控制面板 ── -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- AI 约束输入 -->
+      <div class="card" style="position:relative;border-top-color:var(--accent);">
+        <div class="card-title"><div class="dot"></div>约束条件</div>
+
+        <div class="constraint-area">
+          <textarea class="constraint-input" id="constraintInput"
+            placeholder="用自然语言描述你的排课要求，例如：&#10;• 不想打106套的T5&#10;• 从78套开始选曲&#10;• 必须包含103套的T3&#10;• 锁定T7用BC91"></textarea>
+          <div class="constraint-examples">
+            <span class="example-chip" onclick="addExample('不想打106套的T5')">不想打106套的T5</span>
+            <span class="example-chip" onclick="addExample('从78套开始选曲')">从78套开始选曲</span>
+            <span class="example-chip" onclick="addExample('必须包含103套的T3')">必须包含103套的T3</span>
+            <span class="example-chip" onclick="addExample('锁定T7用BC91')">锁定T7用BC91</span>
+            <span class="example-chip" onclick="addExample('排除BC42和BC98')">排除BC42和BC98</span>
+          </div>
+        </div>
+
+        <!-- 解析结果 -->
+        <div class="parsed-rules" id="parsedRules"></div>
+
+      </div>
+
+      <!-- 时长控制 -->
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>时长目标</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="duration-control">
+            <label>最短</label>
+            <input type="range" class="range-input" id="minDuration" min="38" max="50" value="44"
+              oninput="updateDurationDisplay()">
+            <span class="duration-display" id="minDisplay">44</span>
+            <span style="font-size:12px;color:var(--text2)">min</span>
+          </div>
+          <div class="duration-control">
+            <label>最长</label>
+            <input type="range" class="range-input" id="maxDuration" min="40" max="55" value="46"
+              oninput="updateDurationDisplay()">
+            <span class="duration-display" id="maxDisplay">46</span>
+            <span style="font-size:12px;color:var(--text2)">min</span>
+          </div>
+          <div style="font-size:11px;color:var(--gray2);margin-top:-4px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">
+            超出范围自动重抽，最多重试 50 次
+          </div>
+        </div>
+      </div>
+
+      <!-- 生成按钮 -->
+      <button class="btn btn-primary" id="generateBtn" onclick="generate()">
+        🎲 随机生成课表
+      </button>
+
+      <!-- 历史记录 -->
+      <div class="card" id="historyCard" style="display:none;">
+        <div class="card-title" style="justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="dot"></div>历史记录
+          </div>
+          <button class="btn btn-secondary" onclick="clearHistory()">清空</button>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+
+    </div>
+
+    <!-- ── 右侧结果区域 ── -->
+    <div class="card" style="position:relative;border-top-color:var(--accent);">
+      <div class="result-header">
+        <div class="card-title" style="margin-bottom:0;">
+          <div class="dot"></div>排课结果
+        </div>
+        <div class="result-actions" id="resultActions" style="display:none;">
+          <button class="btn btn-secondary" onclick="exportText()">📋 复制</button>
+          <button class="btn btn-secondary" onclick="exportPrint()">🖨️ 打印</button>
+        </div>
+      </div>
+
+      <!-- 空状态 -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🥊</div>
+        <p>设置约束条件后<br>点击「随机生成课表」开始排课</p>
+      </div>
+
+      <!-- 课表 -->
+      <div id="scheduleResult" style="display:none;">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th style="width:44px;"></th>
+              <th style="width:90px;">节次</th>
+              <th style="width:70px;">套路</th>
+              <th>类型 / 曲目</th>
+              <th style="width:70px;">时长</th>
+              <th style="width:80px;"></th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+
+        <!-- 总时长 -->
+        <div class="total-bar" id="totalBar">
+          <div>
+            <div class="total-label">预估总时长</div>
+            <div class="total-time" id="totalTime">--:--</div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progressFill"></div>
+          </div>
+          <div class="total-range" id="totalRange"></div>
+        </div>
+      </div>
+
+      <div class="loading-overlay" id="generateLoading">
+        <div class="spinner"></div>
+          <div class="loading-text">抽签中...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// 数据库：BC1-106 各节时长（秒）
+// verified=true 为精确数据，false 为估算值
+// ══════════════════════════════════════════════
+const BC_DURATIONS = {"1":{"T1":480,"T2":263,"T3":329,"T4":293,"T5":252,"T6":296,"T7":352,"T8":337},"2":{"T1":488,"T2":271,"T3":336,"T4":359,"T5":287,"T6":271,"T7":345,"T8":376},"3":{"T1":488,"T2":318,"T3":282,"T4":295,"T5":274,"T6":285,"T7":342,"T8":403},"4":{"T1":431,"T2":267,"T3":344,"T4":353,"T5":287,"T6":270,"T7":391,"T8":439},"5":{"T1":441,"T2":309,"T3":283,"T4":368,"T5":267,"T6":244,"T7":345,"T8":433},"6":{"T1":477,"T2":301,"T3":272,"T4":350,"T5":289,"T6":250,"T7":343,"T8":373},"7":{"T1":467,"T2":286,"T3":282,"T4":300,"T5":269,"T6":268,"T7":342,"T8":420},"8":{"T1":453,"T2":295,"T3":287,"T4":286,"T5":245,"T6":290,"T7":331,"T8":300},"9":{"T1":536,"T2":276,"T3":322,"T4":300,"T5":292,"T6":279,"T7":393,"T8":383},"10":{"T1":505,"T2":257,"T3":300,"T4":369,"T5":284,"T6":281,"T7":332,"T8":337},"11":{"T1":487,"T2":290,"T3":276,"T4":287,"T5":267,"T6":275,"T7":380,"T8":438},"12":{"T1":447,"T2":277,"T3":308,"T4":341,"T5":265,"T6":265,"T7":394,"T8":398},"13":{"T1":540,"T2":266,"T3":347,"T4":352,"T5":294,"T6":300,"T7":330,"T8":364},"14":{"T1":549,"T2":271,"T3":334,"T4":351,"T5":249,"T6":251,"T7":330,"T8":300},"15":{"T1":547,"T2":265,"T3":317,"T4":355,"T5":261,"T6":268,"T7":335,"T8":302},"16":{"T1":457,"T2":282,"T3":291,"T4":353,"T5":275,"T6":284,"T7":339,"T8":405},"17":{"T1":500,"T2":301,"T3":345,"T4":319,"T5":258,"T6":299,"T7":330,"T8":360},"18":{"T1":472,"T2":282,"T3":279,"T4":339,"T5":289,"T6":293,"T7":339,"T8":418},"19":{"T1":447,"T2":310,"T3":289,"T4":381,"T5":259,"T6":297,"T7":356,"T8":330},"20":{"T1":501,"T2":276,"T3":303,"T4":313,"T5":296,"T6":292,"T7":330,"T8":434},"21":{"T1":552,"T2":334,"T3":332,"T4":317,"T5":307,"T6":295,"T7":389,"T8":305},"22":{"T1":453,"T2":278,"T3":271,"T4":336,"T5":257,"T6":309,"T7":335,"T8":450},"23":{"T1":516,"T2":260,"T3":328,"T4":292,"T5":264,"T6":280,"T7":383,"T8":330},"24":{"T1":459,"T2":260,"T3":280,"T4":350,"T5":255,"T6":300,"T7":385,"T8":432},"25":{"T1":543,"T2":327,"T3":345,"T4":275,"T5":288,"T6":256,"T7":381,"T8":336},"26":{"T1":510,"T2":339,"T3":305,"T4":272,"T5":257,"T6":267,"T7":330,"T8":337},"27":{"T1":449,"T2":264,"T3":347,"T4":382,"T5":290,"T6":294,"T7":390,"T8":345},"28":{"T1":517,"T2":277,"T3":348,"T4":298,"T5":280,"T6":262,"T7":371,"T8":373},"29":{"T1":478,"T2":310,"T3":348,"T4":331,"T5":305,"T6":297,"T7":339,"T8":396},"30":{"T1":519,"T2":309,"T3":320,"T4":351,"T5":296,"T6":260,"T7":338,"T8":335},"31":{"T1":484,"T2":302,"T3":292,"T4":372,"T5":263,"T6":274,"T7":370,"T8":470},"32":{"T1":447,"T2":268,"T3":310,"T4":363,"T5":253,"T6":302,"T7":341,"T8":425},"33":{"T1":500,"T2":337,"T3":272,"T4":304,"T5":291,"T6":282,"T7":383,"T8":424},"34":{"T1":518,"T2":260,"T3":324,"T4":320,"T5":254,"T6":286,"T7":357,"T8":439},"35":{"T1":564,"T2":286,"T3":354,"T4":372,"T5":264,"T6":268,"T7":391,"T8":326},"36":{"T1":555,"T2":310,"T3":278,"T4":392,"T5":263,"T6":266,"T7":330,"T8":386},"37":{"T1":489,"T2":287,"T3":333,"T4":300,"T5":278,"T6":308,"T7":374,"T8":411},"38":{"T1":571,"T2":317,"T3":348,"T4":322,"T5":265,"T6":257,"T7":330,"T8":331},"39":{"T1":498,"T2":310,"T3":352,"T4":305,"T5":288,"T6":301,"T7":330,"T8":315},"40":{"T1":537,"T2":311,"T3":274,"T4":385,"T5":314,"T6":312,"T7":350,"T8":362},"41":{"T1":469,"T2":297,"T3":341,"T4":394,"T5":293,"T6":265,"T7":344,"T8":449},"42":{"T1":529,"T2":270,"T3":327,"T4":297,"T5":317,"T6":295,"T7":407,"T8":483},"43":{"T1":490,"T2":313,"T3":344,"T4":305,"T5":306,"T6":272,"T7":330,"T8":437},"44":{"T1":471,"T2":283,"T3":321,"T4":353,"T5":294,"T6":284,"T7":375,"T8":452},"45":{"T1":557,"T2":280,"T3":355,"T4":404,"T5":273,"T6":293,"T7":355,"T8":377},"46":{"T1":533,"T2":304,"T3":331,"T4":368,"T5":266,"T6":284,"T7":369,"T8":380},"47":{"T1":499,"T2":323,"T3":340,"T4":316,"T5":274,"T6":311,"T7":364,"T8":367},"48":{"T1":513,"T2":319,"T3":348,"T4":327,"T5":278,"T6":303,"T7":407,"T8":359},"49":{"T1":520,"T2":342,"T3":344,"T4":295,"T5":276,"T6":284,"T7":403,"T8":364},"50":{"T1":495,"T2":313,"T3":342,"T4":307,"T5":302,"T6":281,"T7":357,"T8":488},"51":{"T1":530,"T2":278,"T3":287,"T4":354,"T5":275,"T6":290,"T7":398,"T8":383},"52":{"T1":500,"T2":292,"T3":358,"T4":357,"T5":285,"T6":308,"T7":357,"T8":360},"53":{"T1":578,"T2":323,"T3":323,"T4":295,"T5":300,"T6":303,"T7":370,"T8":491},"54":{"T1":473,"T2":279,"T3":289,"T4":346,"T5":301,"T6":282,"T7":346,"T8":334},"55":{"T1":563,"T2":337,"T3":310,"T4":297,"T5":314,"T6":303,"T7":356,"T8":487},"56":{"T1":575,"T2":329,"T3":302,"T4":414,"T5":317,"T6":314,"T7":378,"T8":359},"57":{"T1":492,"T2":324,"T3":313,"T4":303,"T5":293,"T6":271,"T7":336,"T8":469},"58":{"T1":502,"T2":280,"T3":328,"T4":395,"T5":301,"T6":317,"T7":406,"T8":343},"59":{"T1":497,"T2":338,"T3":309,"T4":317,"T5":282,"T6":305,"T7":341,"T8":496},"60":{"T1":589,"T2":314,"T3":367,"T4":310,"T5":273,"T6":286,"T7":377,"T8":404},"61":{"T1":551,"T2":354,"T3":322,"T4":367,"T5":317,"T6":313,"T7":355,"T8":326},"62":{"T1":549,"T2":301,"T3":329,"T4":315,"T5":302,"T6":283,"T7":347,"T8":451},"63":{"T1":575,"T2":298,"T3":308,"T4":411,"T5":323,"T6":301,"T7":342,"T8":502},"64":{"T1":528,"T2":336,"T3":306,"T4":316,"T5":319,"T6":275,"T7":413,"T8":501},"65":{"T1":503,"T2":299,"T3":285,"T4":381,"T5":306,"T6":310,"T7":341,"T8":432},"66":{"T1":542,"T2":320,"T3":286,"T4":361,"T5":276,"T6":284,"T7":373,"T8":443},"67":{"T1":520,"T2":305,"T3":344,"T4":415,"T5":311,"T6":305,"T7":385,"T8":467},"68":{"T1":559,"T2":272,"T3":370,"T4":418,"T5":286,"T6":279,"T7":377,"T8":493},"69":{"T1":592,"T2":332,"T3":365,"T4":349,"T5":301,"T6":300,"T7":375,"T8":368},"70":{"T1":487,"T2":333,"T3":354,"T4":338,"T5":281,"T6":280,"T7":385,"T8":448},"71":{"T1":521,"T2":349,"T3":285,"T4":323,"T5":317,"T6":277,"T7":384,"T8":342},"72":{"T1":516,"T2":354,"T3":295,"T4":395,"T5":326,"T6":275,"T7":415,"T8":452},"73":{"T1":540,"T2":296,"T3":352,"T4":370,"T5":313,"T6":317,"T7":359,"T8":502},"74":{"T1":563,"T2":355,"T3":326,"T4":390,"T5":303,"T6":311,"T7":369,"T8":456},"75":{"T1":520,"T2":345,"T3":293,"T4":393,"T5":284,"T6":314,"T7":400,"T8":454},"76":{"T1":575,"T2":303,"T3":326,"T4":391,"T5":292,"T6":288,"T7":374,"T8":344},"77":{"T1":502,"T2":351,"T3":355,"T4":410,"T5":306,"T6":288,"T7":376,"T8":423},"78":{"T1":505,"T2":279,"T3":332,"T4":311,"T5":312,"T6":293,"T7":373,"T8":386},"79":{"T1":509,"T2":309,"T3":346,"T4":377,"T5":276,"T6":283,"T7":345,"T8":459},"80":{"T1":568,"T2":306,"T3":338,"T4":332,"T5":299,"T6":285,"T7":420,"T8":371},"81":{"T1":505,"T2":320,"T3":290,"T4":384,"T5":297,"T6":322,"T7":387,"T8":401},"82":{"T1":504,"T2":317,"T3":367,"T4":384,"T5":294,"T6":274,"T7":420,"T8":491},"83":{"T1":596,"T2":341,"T3":342,"T4":419,"T5":315,"T6":324,"T7":391,"T8":391},"84":{"T1":507,"T2":289,"T3":355,"T4":415,"T5":334,"T6":301,"T7":398,"T8":442},"85":{"T1":555,"T2":333,"T3":319,"T4":448,"T5":278,"T6":330,"T7":425,"T8":456},"86":{"T1":599,"T2":360,"T3":372,"T4":397,"T5":328,"T6":280,"T7":370,"T8":371},"87":{"T1":540,"T2":356,"T3":359,"T4":439,"T5":299,"T6":280,"T7":377,"T8":466},"88":{"T1":571,"T2":352,"T3":352,"T4":442,"T5":324,"T6":326,"T7":372,"T8":508},"89":{"T1":547,"T2":325,"T3":356,"T4":413,"T5":293,"T6":334,"T7":351,"T8":349},"90":{"T1":527,"T2":345,"T3":383,"T4":447,"T5":305,"T6":288,"T7":357,"T8":394},"91":{"T1":498,"T2":279,"T3":327,"T4":341,"T5":284,"T6":299,"T7":358,"T8":405},"92":{"T1":528,"T2":345,"T3":329,"T4":434,"T5":283,"T6":288,"T7":344,"T8":412},"93":{"T1":615,"T2":324,"T3":304,"T4":402,"T5":302,"T6":314,"T7":360,"T8":375},"94":{"T1":545,"T2":311,"T3":295,"T4":439,"T5":330,"T6":315,"T7":404,"T8":486},"95":{"T1":555,"T2":337,"T3":374,"T4":433,"T5":295,"T6":330,"T7":344,"T8":510},"96":{"T1":599,"T2":298,"T3":340,"T4":371,"T5":314,"T6":280,"T7":398,"T8":413},"97":{"T1":548,"T2":337,"T3":303,"T4":356,"T5":294,"T6":302,"T7":349,"T8":502},"98":{"T1":602,"T2":296,"T3":354,"T4":349,"T5":331,"T6":327,"T7":351,"T8":411},"99":{"T1":504,"T2":292,"T3":317,"T4":420,"T5":311,"T6":295,"T7":431,"T8":404},"100":{"T1":533,"T2":342,"T3":349,"T4":419,"T5":319,"T6":287,"T7":425,"T8":460},"101":{"T1":602,"T2":349,"T3":346,"T4":407,"T5":299,"T6":334,"T7":422,"T8":510},"102":{"T1":524,"T2":314,"T3":344,"T4":436,"T5":295,"T6":292,"T7":404,"T8":361},"103":{"T1":595,"T2":299,"T3":333,"T4":394,"T5":326,"T6":341,"T7":373,"T8":510},"104":{"T1":563,"T2":335,"T3":386,"T4":363,"T5":308,"T6":308,"T7":400,"T8":504},"105":{"T1":590,"T2":299,"T3":333,"T4":413,"T5":300,"T6":323,"T7":362,"T8":442},"106":{"T1":525,"T2":365,"T3":385,"T4":391,"T5":290,"T6":307,"T7":408,"T8":391}};
+
+// ══════════════════════════════════════════════
+// 曲目数据库：BC78-106 精确曲名（来源：body-combat.eu / japracool.com）
+// 早期套路（BC1-77）暂无数据，显示为空
+// ══════════════════════════════════════════════
+const BC_TRACKS = {
+  "78":  { T1:"Savage / Fogo",           T2:"Earthquake",              T3:"Stay Power",              T4:"Devil",                   T5:"Worth The Lie",           T6:"Lonely Boy",              T7:"Dancehall Soldier",       T8:"Wings" },
+  "79":  { T1:"Knockout / Made in China",T2:"Stockholm White",         T3:"Lifeless",                T4:"Gloves Are Comin' Off",   T5:"Love Has Gone",           T6:"Love & War",              T7:"2 Much",                  T8:"Superhuman" },
+  "80":  { T1:"Bashment Ting / La La La",T2:"Headsprung",              T3:"Holding Onto Heaven",     T4:"Blanket Me",              T5:"Flower",                  T6:"Run Wild",                T7:"THE DROP",                T8:"By Your Side" },
+  "81":  { T1:"Drop It Down / Bullet Blowz",T2:"Mangalam",             T3:"Hearts Ain't Gonna Lie",  T4:"Nice Flow",               T5:"False Alarm",             T6:"How Bad Do You Want It",  T7:"Public Enemy",            T8:"Got You There" },
+  "82":  { T1:"Turn It Up / Barraca",    T2:"Reserve",                 T3:"Pull The Trigger",        T4:"Lacrimosa",               T5:"Different Way",           T6:"Say My Name",             T7:"Shellz",                  T8:"Love Wins Again" },
+  "83":  { T1:"Awa Ni. / Alive",         T2:"Pica",                    T3:"Unreal",                  T4:"Y.A.L.A.",                T5:"Fuji Opener",             T6:"Gopher Mambo",            T7:"Victorious",              T8:"Real" },
+  "84":  { T1:"Real Good Feeling / AVA", T2:"Dear Future Self",        T3:"Let It Go",               T4:"Shankara",                T5:"1995",                    T6:"Life Long After Death",   T7:"Gasoline",                T8:"Not Givin In" },
+  "85":  { T1:"Come For It / Spearhead", T2:"Gy'al Ya Shake It",       T3:"Can't Keep Me Down",      T4:"Devil A Pray",            T5:"Mantra",                  T6:"Brace Up",                T7:"Bap U",                   T8:"Louder" },
+  "86":  { T1:"Ride It / Give It To Dem",T2:"Fiesta!",                 T3:"Hindsight",               T4:"Majesty",                 T5:"Right Here Right Now",    T6:"Street Fight",            T7:"The People",              T8:"Be Alright" },
+  "87":  { T1:"Dumb / In My Soul",       T2:"Let's Go",                T3:"Evolution",               T4:"Stephanie",               T5:"Mariachi",                T6:"I'm Back",                T7:"Tarantino",               T8:"Don't Say It" },
+  "88":  { T1:"Mi Sento Bien / Breathe Stretch Share", T2:"Trap Requiem", T3:"Ripped To Pieces",     T4:"Kolkata",                 T5:"Famalay",                 T6:"Bang!",                   T7:"Bonzai Channel One",      T8:"Deeper Love" },
+  "89":  { T1:"Like Ah Boss / Green Light",T2:"Jimmy Shake",           T3:"In a Moment",             T4:"Lord & Master",           T5:"Look At Me Go",           T6:"Get Ready",               T7:"WAWA",                    T8:"Good Enough" },
+  "90":  { T1:"Symphony / Beggin'",      T2:"Its Goin' Down Tonight",  T3:"Let Me Go",               T4:"Flying Dutchman",         T5:"Gold Dust",               T6:"Make It Look Easy",       T7:"Offender",                T8:"All You Ever Wanted" },
+  "91":  { T1:"",                        T2:"",                        T3:"",                        T4:"",                        T5:"",                        T6:"",                        T7:"",                        T8:"" },
+  "92":  { T1:"",                        T2:"",                        T3:"",                        T4:"",                        T5:"",                        T6:"",                        T7:"",                        T8:"" },
+  "93":  { T1:"Burn It To The Ground / Tick Tick Boom", T2:"Real Ones",T3:"That's On You",           T4:"Shadows",                 T5:"Like A Boss",             T6:"Watch Me Go",             T7:"Incoming",                T8:"Catharsis X" },
+  "94":  { T1:"Feel The Fire / Here We Go Again", T2:"Reason For Fighting", T3:"Unbreakable",        T4:"Fire Emoji",              T5:"Running Up That Hill",    T6:"Follow On",               T7:"What's Your Name",        T8:"Wait For You" },
+  "95":  { T1:"Brutal / Hurricane",      T2:"Mercy",                   T3:"Falling Apart",           T4:"Turn The Music Up",       T5:"Thief / Big City Life",   T6:"Dolls",                   T7:"Wasabi",                  T8:"Release" },
+  "96":  { T1:"So High / Low",           T2:"La La La",                T3:"Miss You",                T4:"Walk This Way",           T5:"Party Up / Find Me",      T6:"Coming Back Stronger",    T7:"Follow",                  T8:"WANTED NEED LOVE" },
+  "97":  { T1:"Rainfall / Quite Storm",  T2:"You Belong To Me",        T3:"Lean On You",             T4:"Danger",                  T5:"IFTK / Only You",         T6:"Rave De Favela",          T7:"Sharp Shooter",           T8:"Perfect Sky" },
+  "98":  { T1:"Salt / Bonkers",          T2:"Sorry I'm Not Sorry",     T3:"So Much In Love",         T4:"New Generation",          T5:"Nothing Else / Elemental",T6:"Temba",                   T7:"Rhyme Dust",              T8:"Paradise" },
+  "99":  { T1:"Dance With Somebody / Oldskool", T2:"Bumba Bass",       T3:"Love Will Take You Higher",T4:"Conqueror",              T5:"TOO BIZARRE / Sweet Disposition", T6:"Jericho",          T7:"It's That Time",          T8:"Past Life" },
+  "100": { T1:"Barricade / Tambor",      T2:"Don't Stop",              T3:"Make No Sound",           T4:"Winning Time",            T5:"Woofa Killa / Circles",   T6:"Ravers",                  T7:"We Can't Stop",           T8:"Ready To Fly" },
+  "101": { T1:"Everybody Work / BRAA",   T2:"No Rules",                T3:"Oxygen",                  T4:"GAS",                     T5:"GO HARD / Hooked",        T6:"Rain Dance",              T7:"Let's Get Raving",        T8:"Outside of Love" },
+  "102": { T1:"Toma Toma / Que Calor",   T2:"Body Move",               T3:"Bring Me Joy",            T4:"Laserbeam",               T5:"Tough Talk / Come Alive", T6:"Rhythm Of The Night",     T7:"Rave Is Life",            T8:"Remember" },
+  "103": { T1:"Crash The Party / JUMPIN",T2:"ZONES",                   T3:"Like An Animal",          T4:"I Am A Dragon",           T5:"",                        T6:"",                        T7:"",                        T8:"" },
+  "104": { T1:"",                        T2:"",                        T3:"",                        T4:"",                        T5:"",                        T6:"",                        T7:"Hey Ya!",                 T8:"" },
+  "105": { T1:"",                        T2:"",                        T3:"",                        T4:"",                        T5:"",                        T6:"",                        T7:"",                        T8:"" },
+  "106": { T1:"",                        T2:"",                        T3:"",                        T4:"",                        T5:"",                        T6:"",                        T7:"Bla Bla",                 T8:"" },
+};
+
+const TRACK_INFO = {
+  T1: { label: 'T1', name: 'Warmup',    focus: '全身激活 · 关节热身',      color: 't1' },
+  T2: { label: 'T2', name: 'Combat 1',  focus: '拳法基础 · 直拳勾拳',      color: 't2' },
+  T3: { label: 'T3', name: 'Power 1',   focus: '体能爆发 · 高强度间歇',    color: 't3' },
+  T4: { label: 'T4', name: 'Combat 2',  focus: '腿法踢击 · 组合动作',      color: 't4' },
+  T5: { label: 'T5', name: 'Power 2',   focus: '核心力量 · 波比跳俯卧撑',  color: 't5' },
+  T6: { label: 'T6', name: 'Combat 3',  focus: '综合搏击 · 拳腿结合',      color: 't6' },
+  T7: { label: 'T7', name: 'Muay Thai', focus: '泰拳精华 · 膝击肘击',      color: 't7' },
+  T8: { label: 'T8', name: 'Power 3',   focus: '终极爆发 · 全身冲刺',      color: 't8' },
+};
+
+// ── 状态 ──
+let rules = [];          // 解析后的约束规则
+let currentSchedule = null;
+let lockedTracks = {};   // { T1: bcNum, T3: bcNum, ... }
+let history = JSON.parse(localStorage.getItem('bc_history') || '[]');
+
+// ── 工具函数 ──
+function fmtSec(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return `${m}:${String(sec).padStart(2,'0')}`;
+}
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// ── 示例填充 ──
+function addExample(text) {
+  const el = document.getElementById('constraintInput');
+  const cur = el.value.trim();
+  el.value = cur ? cur + '\n' + text : text;
+  el.focus();
+}
+
+// ── 时长显示 ──
+function updateDurationDisplay() {
+  const minV = parseInt(document.getElementById('minDuration').value);
+  const maxV = parseInt(document.getElementById('maxDuration').value);
+  if (minV > maxV) {
+    document.getElementById('minDuration').value = maxV;
+  }
+  document.getElementById('minDisplay').textContent = document.getElementById('minDuration').value;
+  document.getElementById('maxDisplay').textContent = maxV;
+}
+
+// ── API Key 管理 ──
+document.getElementById('apiKey').addEventListener('input', function() {
+  const key = this.value.trim();
+  const status = document.getElementById('apiStatus');
+  if (key) {
+    status.textContent = '已配置';
+    status.className = 'api-status ok';
+    localStorage.setItem('bc_api_key', key);
+  } else {
+    status.textContent = '未配置';
+    status.className = 'api-status no';
+    localStorage.removeItem('bc_api_key');
+  }
+});
+
+// 恢复保存的 API Key
+(function() {
+  const saved = localStorage.getItem('bc_api_key');
+  if (saved) {
+    document.getElementById('apiKey').value = saved;
+    document.getElementById('apiStatus').textContent = '已配置';
+    document.getElementById('apiStatus').className = 'api-status ok';
+  }
+})();
+
+// ── AI 解析约束条件 ──
+async function parseConstraints() {
+  const text = document.getElementById('constraintInput').value.trim();
+  if (!text) { showToast('请先输入约束条件', 'error'); return; }
+
+  const apiKey = document.getElementById('apiKey').value.trim();
+
+  // 无 API Key 时用本地规则解析
+  if (!apiKey) {
+    const localRules = parseLocal(text);
+    if (localRules.length > 0) {
+      localRules.forEach(r => addRule(r));
+      showToast(`本地解析成功，识别 ${localRules.length} 条规则`, 'success');
+    } else {
+      showToast('未识别到规则，请配置 API Key 使用 AI 解析', 'info');
+    }
+    return;
+  }
+
+  // 调用 Friday API
+  const btn = document.getElementById('parseBtn');
+  const loading = document.getElementById('parseLoading');
+  btn.disabled = true;
+  loading.classList.add('show');
+
+  try {
+    const systemPrompt = `你是一个 BodyCombat 排课系统的约束条件解析器。
+用户会用自然语言描述排课约束，你需要将其解析为结构化 JSON 规则数组。
+
+每条规则的格式：
+- 排除某套某节：{"type":"exclude","release":106,"track":"T5","desc":"不包含BC106的T5"}
+- 排除某套所有节：{"type":"exclude_release","release":42,"desc":"排除BC42"}
+- 必须包含某套某节：{"type":"include","release":103,"track":"T3","desc":"必须包含BC103的T3"}
+- 锁定某节用某套：{"type":"lock","track":"T7","release":91,"desc":"T7锁定用BC91"}
+- 套路范围限制（从N套开始）：{"type":"range_min","min":78,"desc":"从BC78开始选曲"}
+- 套路范围限制（到N套为止）：{"type":"range_max","max":100,"desc":"只用BC100以前的套路"}
+
+只返回 JSON 数组，不要任何解释文字。如果无法解析，返回空数组 []。`;
+
+    const resp = await fetch('https://aigc.sankuai.com/v1/openai/native/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: text }
+        ],
+        temperature: 0.1,
+        max_tokens: 500
+      })
+    });
+
+    if (!resp.ok) throw new Error(`API 错误: ${resp.status}`);
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content || '[]';
+
+    // 提取 JSON
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('返回格式错误');
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (!Array.isArray(parsed)) throw new Error('解析结果不是数组');
+
+    parsed.forEach(r => addRule(r));
+    showToast(`AI 解析成功，识别 ${parsed.length} 条规则`, 'success');
+    document.getElementById('constraintInput').value = '';
+
+  } catch (err) {
+    console.error(err);
+    // 降级到本地解析
+    const localRules = parseLocal(text);
+    if (localRules.length > 0) {
+      localRules.forEach(r => addRule(r));
+      showToast(`AI 失败，本地解析识别 ${localRules.length} 条规则`, 'info');
+    } else {
+      showToast(`解析失败: ${err.message}`, 'error');
+    }
+  } finally {
+    btn.disabled = false;
+    loading.classList.remove('show');
+  }
+}
+
+// ── 本地规则解析（无 API 降级方案）──
+function parseLocal(text) {
+  const rules = [];
+  const lines = text.split(/[\n，,。.；;]+/).map(l => l.trim()).filter(Boolean);
+
+  for (const line of lines) {
+    // 从 N 套开始 / N 套以后
+    let m = line.match(/从\s*(\d+)\s*套/);
+    if (m) { rules.push({ type:'range_min', min:parseInt(m[1]), desc:`从BC${m[1]}开始选曲` }); continue; }
+
+    // N 套以前 / 到 N 套
+    m = line.match(/(\d+)\s*套以前|到\s*(\d+)\s*套/);
+    if (m) { const n=parseInt(m[1]||m[2]); rules.push({ type:'range_max', max:n, desc:`只用BC${n}以前的套路` }); continue; }
+
+    // 排除 BC N 的 TX / 不想打 N 套的 TX
+    m = line.match(/(?:排除|不想|不要|去掉|删除|黑名单).*?(\d+).*?[Tt](\d)/);
+    if (m) { rules.push({ type:'exclude', release:parseInt(m[1]), track:`T${m[2]}`, desc:`排除BC${m[1]}的T${m[2]}` }); continue; }
+
+    // 排除整套
+    m = line.match(/(?:排除|不想|不要|去掉|删除|黑名单).*?[Bb][Cc]?\s*(\d+)(?!\s*[Tt])/);
+    if (!m) m = line.match(/(?:排除|不想|不要|去掉|删除|黑名单)\s*(\d+)\s*套(?!\s*[Tt])/);
+    if (m) { rules.push({ type:'exclude_release', release:parseInt(m[1]), desc:`排除BC${m[1]}` }); continue; }
+
+    // 必须包含 / 锁定
+    m = line.match(/(?:包含|必须|锁定|固定).*?(\d+).*?[Tt](\d)/);
+    if (m) {
+      const isLock = /锁定|固定/.test(line);
+      rules.push({ type: isLock ? 'lock' : 'include', release:parseInt(m[1]), track:`T${m[2]}`, desc:`${isLock?'锁定':'包含'}BC${m[1]}的T${m[2]}` });
+      continue;
+    }
+  }
+  return rules;
+}
+
+// ── 添加规则 ──
+function addRule(rule) {
+  // 去重
+  const key = JSON.stringify(rule);
+  if (rules.some(r => JSON.stringify(r) === key)) return;
+  rules.push(rule);
+  renderRules();
+}
+
+function removeRule(idx) {
+  rules.splice(idx, 1);
+  renderRules();
+}
+
+function renderRules() {
+  const container = document.getElementById('parsedRules');
+  if (rules.length === 0) { container.innerHTML = ''; return; }
+
+  const icons = { exclude:'🚫', exclude_release:'🚫', include:'✅', lock:'🔒', range_min:'📍', range_max:'📍' };
+  const typeClass = { exclude:'type-exclude', exclude_release:'type-exclude', include:'type-include', lock:'type-lock', range_min:'type-range', range_max:'type-range' };
+
+  container.innerHTML = rules.map((r, i) => `
+    <div class="rule-tag ${typeClass[r.type] || ''}">
+      <span class="rule-icon">${icons[r.type] || '📌'}</span>
+      <span class="rule-text">${r.desc}</span>
+      <span class="rule-remove" onclick="removeRule(${i})">×</span>
+    </div>
+  `).join('');
+}
+
+// ── 构建有效套路池 ──
+function buildPool() {
+  let minRelease = 1, maxRelease = 106;
+  const excludedReleases = new Set();
+  const excludedSlots = new Set(); // "release_track" 格式
+
+  for (const r of rules) {
+    if (r.type === 'range_min') minRelease = Math.max(minRelease, r.min);
+    if (r.type === 'range_max') maxRelease = Math.min(maxRelease, r.max);
+    if (r.type === 'exclude_release') excludedReleases.add(r.release);
+    if (r.type === 'exclude') excludedSlots.add(`${r.release}_${r.track}`);
+  }
+
+  // 每个 track 的可用套路列表
+  const pool = {};
+  for (const track of ['T1','T2','T3','T4','T5','T6','T7','T8']) {
+    pool[track] = [];
+    for (let n = minRelease; n <= maxRelease; n++) {
+      if (excludedReleases.has(n)) continue;
+      if (excludedSlots.has(`${n}_${track}`)) continue;
+      if (!BC_DURATIONS[String(n)]) continue;
+      pool[track].push(n);
+    }
+  }
+  return pool;
+}
+
+// ── 生成课表 ──
+async function generate() {
+  const btn = document.getElementById('generateBtn');
+  const loading = document.getElementById('generateLoading');
+  btn.disabled = true;
+  loading.classList.add('show');
+
+  await new Promise(r => setTimeout(r, 50)); // 让 UI 更新
+
+  try {
+    // ── 先解析输入框里的约束文本 ──
+    const inputText = document.getElementById('constraintInput').value.trim();
+    if (inputText) {
+      const newRules = parseLocal(inputText);
+      newRules.forEach(r => addRule(r));
+      if (newRules.length > 0) {
+        document.getElementById('constraintInput').value = '';
+      }
+    }
+
+    const minSec = parseInt(document.getElementById('minDuration').value) * 60;
+    const maxSec = parseInt(document.getElementById('maxDuration').value) * 60;
+    const pool = buildPool();
+
+    // 检查 include/lock 规则
+    const forcedTracks = {};
+    for (const r of rules) {
+      if ((r.type === 'include' || r.type === 'lock') && r.track && r.release) {
+        forcedTracks[r.track] = r.release;
+      }
+    }
+
+    let schedule = null;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 50;
+
+    while (attempts < MAX_ATTEMPTS) {
+      attempts++;
+      const candidate = {};
+      let valid = true;
+
+      for (const track of ['T1','T2','T3','T4','T5','T6','T7','T8']) {
+        if (forcedTracks[track]) {
+          // 强制指定
+          const rel = forcedTracks[track];
+          if (!BC_DURATIONS[String(rel)]) { valid = false; break; }
+          candidate[track] = rel;
+        } else if (lockedTracks[track]) {
+          // 用户手动锁定
+          candidate[track] = lockedTracks[track];
+        } else {
+          const available = pool[track];
+          if (available.length === 0) { valid = false; break; }
+          candidate[track] = rand(available);
+        }
+      }
+
+      if (!valid) break;
+
+      // 计算总时长
+      const total = Object.entries(candidate).reduce((sum, [t, rel]) => {
+        return sum + (BC_DURATIONS[String(rel)]?.[t] || 0);
+      }, 0);
+
+      if (total >= minSec && total <= maxSec) {
+        schedule = { tracks: candidate, total };
+        break;
+      }
+    }
+
+    if (!schedule) {
+      // 超出重试次数，取最接近的
+      const candidate = {};
+      for (const track of ['T1','T2','T3','T4','T5','T6','T7','T8']) {
+        if (forcedTracks[track]) candidate[track] = forcedTracks[track];
+        else if (lockedTracks[track]) candidate[track] = lockedTracks[track];
+        else {
+          const available = pool[track];
+          if (available.length === 0) { showToast('约束条件过严，无法生成课表', 'error'); return; }
+          candidate[track] = rand(available);
+        }
+      }
+      const total = Object.entries(candidate).reduce((sum, [t, rel]) => sum + (BC_DURATIONS[String(rel)]?.[t] || 0), 0);
+      schedule = { tracks: candidate, total };
+      showToast(`重试 ${MAX_ATTEMPTS} 次后仍超出时长范围，已取最近结果`, 'info');
+    }
+
+    currentSchedule = schedule;
+    renderSchedule(schedule);
+    saveHistory(schedule);
+
+  } finally {
+    btn.disabled = false;
+    loading.classList.remove('show');
+  }
+}
+
+// ── 渲染课表 ──
+function renderSchedule(schedule) {
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('scheduleResult').style.display = 'block';
+  document.getElementById('resultActions').style.display = 'flex';
+
+  const tbody = document.getElementById('scheduleBody');
+  const tracks = ['T1','T2','T3','T4','T5','T6','T7','T8'];
+
+  tbody.innerHTML = tracks.map(track => {
+    const rel = schedule.tracks[track];
+    const dur = BC_DURATIONS[String(rel)]?.[track] || 0;
+    const info = TRACK_INFO[track];
+    const isLocked = lockedTracks[track] === rel;
+    const songName = BC_TRACKS[String(rel)]?.[track] || '';
+
+    return `
+      <tr>
+        <td><div class="track-badge ${info.color}">${info.label}</div></td>
+        <td>
+          <div class="track-name">${info.name}</div>
+          <div class="track-focus">${info.focus}</div>
+          ${songName ? `<div class="track-song" title="${songName}">${songName}</div>` : ''}
+        </td>
+        <td>
+          <div class="bc-number">
+            <span class="bc-prefix">BC</span>${rel}
+          </div>
+        </td>
+        <td class="duration-cell">${fmtSec(dur)}</td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="lock-btn ${isLocked ? 'locked' : ''}"
+              onclick="toggleLock('${track}', ${rel})"
+              title="${isLocked ? '解锁' : '锁定此节'}">
+              ${isLocked ? '🔒' : '🔓'}
+            </button>
+            <button class="reroll-btn" onclick="rerollTrack('${track}')" title="重新抽取此节">
+              🎲
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // 总时长
+  updateTotalBar(schedule.total);
+}
+
+function updateTotalBar(totalSec) {
+  const minSec = parseInt(document.getElementById('minDuration').value) * 60;
+  const maxSec = parseInt(document.getElementById('maxDuration').value) * 60;
+  const totalEl = document.getElementById('totalTime');
+  const fillEl = document.getElementById('progressFill');
+  const rangeEl = document.getElementById('totalRange');
+
+  totalEl.textContent = fmtSec(totalSec);
+
+  // 颜色判断
+  if (totalSec >= minSec && totalSec <= maxSec) {
+    totalEl.className = 'total-time ok';
+    fillEl.style.background = 'var(--green)';
+  } else if (Math.abs(totalSec - (minSec + maxSec) / 2) < 120) {
+    totalEl.className = 'total-time warn';
+    fillEl.style.background = 'var(--gold)';
+  } else {
+    totalEl.className = 'total-time bad';
+    fillEl.style.background = 'var(--accent)';
+  }
+
+  // 进度条（以 38-56min 为范围）
+  const pct = Math.min(100, Math.max(0, (totalSec - 38*60) / (18*60) * 100));
+  fillEl.style.width = pct + '%';
+
+  rangeEl.textContent = `目标 ${document.getElementById('minDisplay').textContent}–${document.getElementById('maxDisplay').textContent} min`;
+}
+
+// ── 锁定/解锁 ──
+function toggleLock(track, rel) {
+  if (lockedTracks[track] === rel) {
+    delete lockedTracks[track];
+    showToast(`${track} 已解锁`, 'info');
+  } else {
+    lockedTracks[track] = rel;
+    showToast(`${track} 已锁定为 BC${rel}`, 'success');
+  }
+  if (currentSchedule) renderSchedule(currentSchedule);
+}
+
+// ── 单节重抽 ──
+async function rerollTrack(track) {
+  if (!currentSchedule) return;
+  const pool = buildPool();
+  const available = pool[track];
+  if (available.length === 0) { showToast(`${track} 无可用套路`, 'error'); return; }
+
+  // 排除当前值，尽量换一个
+  const others = available.filter(n => n !== currentSchedule.tracks[track]);
+  const newRel = rand(others.length > 0 ? others : available);
+
+  currentSchedule.tracks[track] = newRel;
+  currentSchedule.total = Object.entries(currentSchedule.tracks).reduce((sum, [t, rel]) => {
+    return sum + (BC_DURATIONS[String(rel)]?.[t] || 0);
+  }, 0);
+
+  renderSchedule(currentSchedule);
+  showToast(`${track} 已重新抽取 → BC${newRel}`, 'success');
+}
+
+// ── 历史记录 ──
+function saveHistory(schedule) {
+  const entry = {
+    time: new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }),
+    tracks: Object.entries(schedule.tracks).map(([t, r]) => `${t}:BC${r}`).join(' '),
+    total: schedule.total,
+    data: schedule
+  };
+  history.unshift(entry);
+  if (history.length > 10) history.pop();
+  localStorage.setItem('bc_history', JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  if (history.length === 0) {
+    document.getElementById('historyCard').style.display = 'none';
+    return;
+  }
+  document.getElementById('historyCard').style.display = 'block';
+  document.getElementById('historyList').innerHTML = history.map((h, i) => `
+    <div class="history-item" onclick="loadHistory(${i})">
+      <div class="history-time">${h.time} <span class="history-duration">${fmtSec(h.total)}</span></div>
+      <div class="history-tracks">${h.tracks}</div>
+    </div>
+  `).join('');
+}
+
+function loadHistory(idx) {
+  currentSchedule = history[idx].data;
+  renderSchedule(currentSchedule);
+  showToast('已加载历史记录', 'info');
+}
+
+function clearHistory() {
+  history = [];
+  localStorage.removeItem('bc_history');
+  renderHistory();
+}
+
+// ── 导出 ──
+function exportText() {
+  if (!currentSchedule) return;
+  const lines = ['BodyCombat 排课表', '─'.repeat(30)];
+  for (const [track, rel] of Object.entries(currentSchedule.tracks)) {
+    const dur = BC_DURATIONS[String(rel)]?.[track] || 0;
+    const info = TRACK_INFO[track];
+    lines.push(`${track} ${info.name.padEnd(10)} BC${String(rel).padStart(3,'0')}  ${fmtSec(dur)}`);
+  }
+  lines.push('─'.repeat(30));
+  lines.push(`总时长: ${fmtSec(currentSchedule.total)}`);
+  navigator.clipboard.writeText(lines.join('\n')).then(() => showToast('已复制到剪贴板', 'success'));
+}
+
+function exportPrint() {
+  if (!currentSchedule) return;
+  const tracks = ['T1','T2','T3','T4','T5','T6','T7','T8'];
+  const rows = tracks.map(track => {
+    const rel = currentSchedule.tracks[track];
+    const dur = BC_DURATIONS[String(rel)]?.[track] || 0;
+    const info = TRACK_INFO[track];
+    return `<tr><td>${track}</td><td>${info.name}</td><td>BC${rel}</td><td>${info.focus}</td><td>${fmtSec(dur)}</td></tr>`;
+  }).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html><head><title>BC 排课表</title>
+    <style>
+      body { font-family: sans-serif; padding: 24px; }
+      h2 { margin-bottom: 16px; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+      th { background: #f5f5f5; }
+      .total { margin-top: 12px; font-weight: bold; font-size: 16px; }
+    </style></head><body>
+    <h2>🥊 BodyCombat 排课表</h2>
+    <table><thead><tr><th>节次</th><th>类型</th><th>套路</th><th>训练重点</th><th>时长</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <div class="total">预估总时长：${fmtSec(currentSchedule.total)}</div>
+    <script>window.print();<\/script>
+    </body></html>
+  `);
+}
+
+// ── 初始化 ──
+renderHistory();
+updateDurationDisplay();
+</script>
+</body>
+</html>
