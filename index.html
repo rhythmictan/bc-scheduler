@@ -1206,13 +1206,22 @@ function parseLocal(text) {
   const lines = text.split(/[\n，,。.；;]+/).map(l => l.trim()).filter(Boolean);
 
   for (const line of lines) {
-    // 从 N 套开始 / N 套以后
-    let m = line.match(/从\s*(\d+)\s*套/);
-    if (m) { rules.push({ type:'range_min', min:parseInt(m[1]), desc:`从BC${m[1]}开始选曲` }); continue; }
+    // 从 N 套开始 / 从bc N 开始 / bc N 之后 / N 套以后
+    let m = line.match(/从\s*[Bb][Cc]?\s*(\d+)|[Bb][Cc]\s*(\d+)\s*(?:套\s*)?(?:之后|以后|后)/);
+    if (!m) m = line.match(/从\s*(\d+)\s*套|(\d+)\s*套\s*(?:之后|以后|后)/);
+    if (m) {
+      const n = parseInt(m[1] || m[2]);
+      // "之后/以后" 语义是不含本套，+1；"从...开始" 含本套
+      const isAfter = /之后|以后/.test(line);
+      const min = isAfter ? n + 1 : n;
+      rules.push({ type:'range_min', min, desc:`从BC${min}开始选曲` });
+      continue;
+    }
 
     // N 套以前 / 到 N 套
-    m = line.match(/(\d+)\s*套以前|到\s*(\d+)\s*套/);
-    if (m) { const n=parseInt(m[1]||m[2]); rules.push({ type:'range_max', max:n, desc:`只用BC${n}以前的套路` }); continue; }
+    m = line.match(/(\d+)\s*套以前|到\s*[Bb][Cc]?\s*(\d+)|[Bb][Cc]\s*(\d+)\s*(?:套\s*)?(?:之前|以前)/);
+    if (!m) m = line.match(/到\s*(\d+)\s*套/);
+    if (m) { const n=parseInt(m[1]||m[2]||m[3]); rules.push({ type:'range_max', max:n, desc:`只用BC${n}以前的套路` }); continue; }
 
     // 排除 BC N 的 TX / 不想打 N 套的 TX
     m = line.match(/(?:排除|不想|不要|去掉|删除|黑名单).*?(\d+).*?[Tt](\d)/);
