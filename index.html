@@ -963,9 +963,8 @@
           <thead>
             <tr>
               <th style="width:44px;"></th>
-              <th style="width:90px;">节次</th>
-              <th style="width:70px;">套路</th>
-              <th>类型 / 曲目</th>
+              <th>节次</th>
+              <th style="width:80px;">套路</th>
               <th style="width:70px;">时长</th>
               <th style="width:80px;"></th>
             </tr>
@@ -1508,7 +1507,7 @@ function saveHistory(schedule) {
     data: schedule
   };
   history.unshift(entry);
-  if (history.length > 10) history.pop();
+  if (history.length > 3) history.pop();
   localStorage.setItem('bc_history', JSON.stringify(history));
   renderHistory();
 }
