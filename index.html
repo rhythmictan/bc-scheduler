@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>BodyCombat 随机排课系统</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap');
@@ -27,6 +27,10 @@
     --radius-sm: 2px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   body {
     background: var(--bg);
     color: var(--text);
@@ -43,6 +47,7 @@
     gap: 0;
     position: relative;
     overflow: hidden;
+    width: 100%;
   }
   header::after {
     content: '';
@@ -119,33 +124,29 @@
   @media (max-width: 600px) {
     /* Header */
     header {
-      padding: 0 16px;
+      padding: 0 14px;
     }
     header::after {
-      width: 30%;
+      display: none; /* 小屏完全隐藏红色斜切块，避免遮挡文字 */
     }
     .header-left {
-      gap: 12px;
-      padding: 16px 0;
+      gap: 10px;
+      padding: 14px 0;
     }
     .header-logo-mark {
-      width: 38px; height: 38px;
-      font-size: 18px;
+      width: 34px; height: 34px;
+      font-size: 16px;
     }
     header h1 {
-      font-size: 22px;
-      letter-spacing: 1px;
+      font-size: 20px;
+      letter-spacing: 0.5px;
     }
     header .subtitle {
       font-size: 9px;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.5px;
     }
     .header-right {
-      padding: 16px 0 16px 24px;
-    }
-    .header-badge {
-      font-size: 10px;
-      letter-spacing: 1px;
+      display: none; /* 小屏隐藏 INSTRUCTOR TOOL 徽章 */
     }
 
     /* Container */
@@ -182,6 +183,8 @@
       font-size: 15px;
       padding: 14px;
       letter-spacing: 2px;
+      clip-path: none; /* 小屏去掉斜切，防止溢出 */
+      border-radius: 2px;
     }
 
     /* 结果区域 header */
@@ -196,98 +199,117 @@
 
     /* ── 课表：手机上改为卡片式布局 ── */
     .schedule-table thead {
-      display: none; /* 隐藏表头 */
+      display: none;
     }
-    .schedule-table,
-    .schedule-table tbody,
-    .schedule-table tr,
-    .schedule-table td {
+    /* table 本身改为 block，让 tbody/tr 可以正常流式布局 */
+    .schedule-table {
       display: block;
       width: 100%;
     }
+    .schedule-table tbody {
+      display: block;
+      width: 100%;
+    }
+    /* 每行变成一张卡片，用 grid 布局 */
     .schedule-table tr {
+      display: grid;
+      grid-template-columns: 34px 1fr auto;
+      grid-template-rows: auto auto;
+      column-gap: 8px;
+      row-gap: 2px;
+      align-items: center;
       border: 1px solid var(--border);
       border-left: 3px solid var(--black);
       margin-bottom: 8px;
-      padding: 12px;
-      position: relative;
+      padding: 10px 10px 10px 8px;
       background: var(--surface);
+      width: 100%;
+      box-sizing: border-box;
     }
-    .schedule-table tr:last-child {
-      margin-bottom: 0;
-    }
-    .schedule-table tr:hover td {
-      background: transparent;
-    }
+    .schedule-table tr:last-child { margin-bottom: 0; }
+    /* td 全部 display:contents 让 grid 直接管理内部元素 —— 不行，改用明确定位 */
     .schedule-table td {
+      display: block;
       padding: 0;
       border: none;
+      background: transparent !important;
+      overflow: hidden;
     }
-
-    /* 卡片内布局：用 flex 重新排列 */
-    .schedule-table tr {
-      display: grid;
-      grid-template-columns: 40px 1fr auto;
-      grid-template-rows: auto auto;
-      gap: 4px 10px;
-      align-items: center;
-    }
-    /* td 顺序：badge | 节次信息 | 时长 | 操作按钮 */
-    .schedule-table td:nth-child(1) { /* badge */
+    /* col1: badge，跨两行 */
+    .schedule-table td:nth-child(1) {
       grid-column: 1;
       grid-row: 1 / 3;
       display: flex;
       align-items: center;
+      justify-content: center;
     }
-    .schedule-table td:nth-child(2) { /* 节次/曲目 */
+    /* col2 row1: 节次名称 + 曲目 */
+    .schedule-table td:nth-child(2) {
       grid-column: 2;
       grid-row: 1;
+      min-width: 0;
     }
-    .schedule-table td:nth-child(3) { /* BC号 */
+    /* col3 row1: BC号 */
+    .schedule-table td:nth-child(3) {
       grid-column: 3;
       grid-row: 1;
       text-align: right;
+      white-space: nowrap;
     }
-    .schedule-table td:nth-child(4) { /* 时长 */
+    /* col2 row2: 时长 */
+    .schedule-table td:nth-child(4) {
       grid-column: 2;
       grid-row: 2;
     }
-    .schedule-table td:nth-child(5) { /* 操作 */
+    /* col3 row2: 操作按钮 */
+    .schedule-table td:nth-child(5) {
       grid-column: 3;
       grid-row: 2;
       display: flex;
       justify-content: flex-end;
+      gap: 4px;
     }
 
     .track-badge {
-      width: 32px; height: 32px;
-      font-size: 11px;
+      width: 30px; height: 30px;
+      font-size: 10px;
     }
     .bc-number {
-      font-size: 22px;
+      font-size: 15px;
+      line-height: 1;
+      text-align: right;
     }
     .bc-number .bc-prefix {
-      font-size: 10px;
+      font-size: 8px;
     }
     .track-name {
       font-size: 12px;
+      white-space: nowrap;
     }
     .track-focus {
-      font-size: 11px;
+      font-size: 10px;
+      white-space: normal;       /* 允许换行，不截断 */
+      line-height: 1.3;
+      color: var(--gray2);
     }
     .track-song {
-      font-size: 11px;
+      font-size: 10px;
       max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .duration-cell {
-      font-size: 16px;
+      font-size: 14px;
       color: var(--gray);
+      letter-spacing: 0;
     }
 
-    /* 操作按钮加大点击区域 */
+    /* 操作按钮 */
     .reroll-btn, .lock-btn {
-      padding: 7px 11px;
-      font-size: 14px;
+      padding: 5px 7px;
+      font-size: 12px;
+      min-width: 0;
     }
 
     /* 总时长条 */
